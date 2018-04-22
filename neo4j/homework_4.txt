@@ -1,7 +1,214 @@
-// The scenario you have used for your schema is:
+// The scenario you have used for your schema is: Star Wars 
 
 
 // This is an example. Your own commands should *not* be commented out so we can pipe the file into the cypher-shell.
 // If you'd like to test your commands, you can run 'cat homework_4.txt | cypher-shell -u neo4j -p test' from
 // the vagrant box command line. Make sure neo4j is running first.
 // CREATE (a:person { name: 't' });
+
+// nodes:
+CREATE (n:Originals { name: 'C3PO'});
+CREATE (n:Originals { name: 'Darth Vader', old_name: 'Anakin Skywalker'}); 
+CREATE (n:Prequels { name: 'Padme Amidala'});
+CREATE (n:Originals { name: 'R2D2'});
+CREATE (n:Originals { name: 'Yoda'});
+CREATE (n:Originals { name: 'Luke Skywalker'});
+CREATE (n:Originals { name: 'Princess Leia Organa'});
+CREATE (n:Originals { name: 'Han Solo'});
+CREATE (n:Originals { name: 'Chewbacca'});
+CREATE (n:Sequels { name: 'Rey'});
+CREATE (n:Sequels { name: 'Kylo Ren'});
+
+// relationships, tons of them:
+
+// C3PO and Darth Vader
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'C3PO' AND b.name = 'Darth Vader'
+CREATE (a)-[r:OWNED_BY]->(b)
+RETURN type(r);
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'C3PO' AND b.name = 'Darth Vader'
+CREATE (b)-[r:OWNS]->(a)
+RETURN type(r);
+
+
+// Darth and Padme
+
+MATCH (a:Originals),(b:Prequels)
+WHERE a.name = 'Darth Vader' AND b.name = 'Padme Amidala'
+CREATE (a)-[r:MARRIED_TO { in: 'Episode II'}]->(b)
+RETURN type(r), r.in;
+
+MATCH (a:Originals),(b:Prequels)
+WHERE a.name = 'Darth Vader' AND b.name = 'Padme Amidala'
+CREATE (b)-[r:MARRIED_TO { in: 'Episode II'}]->(a)
+RETURN type(r), r.in;
+
+
+// R2D2 and Padme
+
+MATCH (a:Prequels),(b:Originals)
+WHERE a.name = 'Padme Amidala' AND b.name = 'R2D2'
+CREATE (a)-[r:OWNS { in: 'Episode I'}]->(b)
+RETURN type(r), r.in;
+
+MATCH (a:Prequels),(b:Originals)
+WHERE a.name = 'Padme Amidala' AND b.name = 'R2D2'
+CREATE (b)-[r:OWNED_BY { in: 'Episode I'}]->(a)
+RETURN type(r), r.in;
+
+
+// Yoda and Luke
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Yoda' AND b.name = 'Luke Skywalker'
+CREATE (a)-[r:TRAINOR_OF { in: 'Episode V'}]->(b)
+RETURN type(r), r.in;
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Yoda' AND b.name = 'Luke Skywalker'
+CREATE (b)-[r:TRAINED_BY { in: 'Episode V'}]->(a)
+RETURN type(r), r.in;
+
+
+// Darth, Padme and their children, Luke and Princess Leia
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Darth Vader' AND b.name = 'Luke Skywalker'
+CREATE (a)-[r:PARENT_OF]->(b)
+RETURN type(r);
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Darth Vader' AND b.name = 'Princess Leia Organa'
+CREATE (a)-[r:PARENT_OF]->(b)
+RETURN type(r);
+
+MATCH (a:Prequels),(b:Originals)
+WHERE a.name = 'Padme Amidala' AND b.name = 'Princess Leia Organa'
+CREATE (a)-[r:PARENT_OF]->(b)
+RETURN type(r);
+
+MATCH (a:Prequels),(b:Originals)
+WHERE a.name = 'Padme Amidala' AND b.name = 'Luke Skywalker'
+CREATE (a)-[r:PARENT_OF]->(b)
+RETURN type(r);
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Darth Vader' AND b.name = 'Luke Skywalker'
+CREATE (b)-[r:CHILD_OF]->(a)
+RETURN type(r);
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Darth Vader' AND b.name = 'Princess Leia Organa'
+CREATE (b)-[r:CHILD_OF]->(a)
+RETURN type(r);
+
+MATCH (a:Prequels),(b:Originals)
+WHERE a.name = 'Padme Amidala' AND b.name = 'Luke Skywalker'
+CREATE (b)-[r:CHILD_OF]->(a)
+RETURN type(r);
+
+MATCH (a:Prequels),(b:Originals)
+WHERE a.name = 'Padme Amidala' AND b.name = 'Princess Leia Organa'
+CREATE (b)-[r:CHILD_OF]->(a)
+RETURN type(r);
+
+
+// Luke and Leia
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Luke Skywalker' AND b.name = 'Princess Leia Organa'
+CREATE (a)-[r:SIBLING_OF]->(b)
+RETURN type(r);
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Luke Skywalker' AND b.name = 'Princess Leia Organa'
+CREATE (b)-[r:SIBLING_OF]->(a)
+RETURN type(r);
+
+
+// Leia and Han
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Han Solo' AND b.name = 'Princess Leia Organa'
+CREATE (a)-[r:MARRIED_TO]->(b)
+RETURN type(r);
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Han Solo' AND b.name = 'Princess Leia Organa'
+CREATE (b)-[r:MARRIED_TO]->(a)
+RETURN type(r);
+
+
+// Han and Chewbacca
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Han Solo' AND b.name = 'Chewbacca'
+CREATE (a)-[r:SIDEKICK_OF {since: 'Episode III'}]->(b)
+RETURN type(r), r.since;
+
+MATCH (a:Originals),(b:Originals)
+WHERE a.name = 'Han Solo' AND b.name = 'Chewbacca'
+CREATE (b)-[r:SIDEKICK_OF {since: 'Episode III'}]->(a)
+RETURN type(r), r.since;
+
+
+// Leia, Han and their child, Kylo Ren
+
+MATCH (a:Originals),(b:Sequels)
+WHERE a.name = 'Han Solo' AND b.name = 'Kylo Ren'
+CREATE (a)-[r:PARENT_OF]->(b)
+RETURN type(r);
+
+MATCH (a:Originals),(b:Sequels)
+WHERE a.name = 'Han Solo' AND b.name = 'Kylo Ren'
+CREATE (b)-[r:CHILD_OF]->(a)
+RETURN type(r);
+
+MATCH (a:Originals),(b:Sequels)
+WHERE a.name = 'Princess Leia Organa' AND b.name = 'Kylo Ren'
+CREATE (a)-[r:PARENT_OF]->(b)
+RETURN type(r);
+
+MATCH (a:Originals),(b:Sequels)
+WHERE a.name = 'Princess Leia Organa' AND b.name = 'Kylo Ren'
+CREATE (b)-[r:CHILD_OF]->(a)
+RETURN type(r);
+
+
+// Rey and Kylo Ren
+
+MATCH (a:Sequels),(b:Sequels)
+WHERE a.name = 'Rey' AND b.name = 'Kylo Ren'
+CREATE (a)-[r:ENEMY_OF {since: 'Episode VII'}]->(b)
+RETURN type(r), r.since;
+
+MATCH (a:Sequels),(b:Sequels)
+WHERE a.name = 'Rey' AND b.name = 'Kylo Ren'
+CREATE (b)-[r:ENEMY_OF {since: 'Episode VII'}]->(a)
+RETURN type(r), r.since;
+
+// Queries
+
+MATCH (a)-[r]->(b)
+WHERE a.name='Padme Amidala'
+RETURN a.name, b.name, type(r);
+
+MATCH (a)-[r]->(b)
+WHERE a.name='Luke Skywalker'
+RETURN a.name, b.name, type(r);
+
+// Other kinds of queries that I found interesting
+
+// subgraph of subgraph by relationship 
+// all the relationships of Padme  
+MATCH (a)-[r]->(b)
+WHERE a.name='Padme Amidala' AND type(r)= 'PARENT_OF'
+RETURN a.name, b.name, type(r);
+
+// by a relationship everywhere in the graph
+MATCH (a)-[r]-(b)
+WHERE (a)-[:MARRIED_TO]-(b)
+RETURN a.name, b.name, type(r);
