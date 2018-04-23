@@ -192,6 +192,7 @@ RETURN type(r), r.since;
 
 // Queries
 
+// by person
 MATCH (a)-[r]->(b)
 WHERE a.name='Padme Amidala'
 RETURN a.name, b.name, type(r);
@@ -200,15 +201,14 @@ MATCH (a)-[r]->(b)
 WHERE a.name='Luke Skywalker'
 RETURN a.name, b.name, type(r);
 
-// Other kinds of queries that I found interesting
+// by a relationship everywhere in the graph
+MATCH (a)-[r]-(b)
+WHERE (a)-[:MARRIED_TO]-(b)
+RETURN a.name, b.name, type(r);
 
-// subgraph of subgraph by relationship 
+// subgraph of person subgraph by relationship 
 // all the relationships of Padme  
 MATCH (a)-[r]->(b)
 WHERE a.name='Padme Amidala' AND type(r)= 'PARENT_OF'
 RETURN a.name, b.name, type(r);
 
-// by a relationship everywhere in the graph
-MATCH (a)-[r]-(b)
-WHERE (a)-[:MARRIED_TO]-(b)
-RETURN a.name, b.name, type(r);
