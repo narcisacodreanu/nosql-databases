@@ -1,13 +1,29 @@
+# To run this script, use python3 final_project.py
+#
 # Put the use case you chose here. Then justify your database choice:
-# Photo app - using neo4j
-# using python3
+# Photo app - using neo4j. I chose this database because a graph database seemed the most appropriate choice,
+# in particular due to its flexible data model. Everything in my database can act as an entity, and the stength resides 
+# in the connections and relationships between the nodes. Moreover, a graph database makes queries easier and more efficient, 
+# as you can query subgraphs, which makes the operations faster. The easy way of visualizing the graph model also contributed 
+# to my choice, as the fact that there is a clear direct correspondence between how a graph and a social photo app network work
+# was important when designing this.  
+#   
+# The models used are: user, photo, video, comment, like, collection, filter, message.
 #
 # Explain what will happen if coffee is spilled on one of the servers in your cluster, causing it to go down.
-# fine to just write text
+# From the neo4j documentation: "A Neo4j cluster is comprised of a single master instance and zero or more slave instances. 
+# All instances in the cluster have full copies of the data in their local database files." This means that even if 
+# one of the servers in our clusters goes down, the cluster is fault tolerant and will continue to operate. Moreover,
+# if the master fails, a new master will be elected automatically. 
 #
 # What data is it not ok to lose in your app? What can you do in your commands to mitigate the risk of lost data?
-# search with reobusness-related things in the documentation
-#
+# I would argue that, given the nature of everything as an entity of my graph database, all the data is important. However,
+# if I were to pick data that is critical, I would say that it is the user profiles. Losing a photo of a user is not as 
+# major as losing the full profile of a user. Also, because many nodes revolve around user nodes, losing that would create 
+# loss of other nodes, especially if they were only connected to the user node. Neo4j clustering is the best way to accommodate
+# for disasters and mitigate the risk of lost data. Something that I did in my commands also was to wrap the user creation in a 
+# single session, such that if there is an issue with the other transactions or sessions, they would not affect the ones concerning
+# user creation.    
 
 from neo4j.v1 import GraphDatabase
 
@@ -131,33 +147,33 @@ def write_photo_comment(tx, comment_id, username, photo_id):
     	print(record["a.id"], record["type(r)"], record["b.id"])
 
 # method used to create a photo like relationship 
-def like_photo(tx, username, photo_id):
+def like_photo(tx, username, photo_id, date_like):
 	# user likes photo
     for record in tx.run("MATCH (a:User),(b:Photo) "
                          "WHERE a.username = $username AND b.id = $photo_id "
-                         "CREATE (a)-[r:LIKES]->(b) "
-                         "RETURN a.username, type(r), b.id", username = username, photo_id=photo_id):
+                         "CREATE (a)-[r:LIKES {on: $date_like}]->(b) "
+                         "RETURN a.username, type(r), b.id", username = username, photo_id=photo_id, date_like=date_like):
         print(record["a.username"], record["type(r)"], record["b.id"])
     # photo liked by user 
     for record in tx.run("MATCH (a:Photo),(b:User) "
                      "WHERE a.id = $photo_id AND b.username = $username "
-                     "CREATE (a)-[r:LIKED_BY]->(b) "
-                     "RETURN a.id, type(r), b.username", photo_id = photo_id, username = username):
+                     "CREATE (a)-[r:LIKED_BY {on: $date_like}]->(b) "
+                     "RETURN a.id, type(r), b.username", photo_id = photo_id, username = username, date_like=date_like):
     	print(record["a.id"], record["type(r)"], record["b.username"])
 
 # method used to create a video like relationship 
-def like_video(tx, username, video_id):
+def like_video(tx, username, video_id, date_like):
 	# user likes video
     for record in tx.run("MATCH (a:User),(b:Video) "
                          "WHERE a.username = $username AND b.id = $video_id "
-                         "CREATE (a)-[r:LIKES]->(b) "
-                         "RETURN a.username, type(r), b.id", username = username, video_id=video_id):
+                         "CREATE (a)-[r:LIKES {on: $date_like}]->(b) "
+                         "RETURN a.username, type(r), b.id", username = username, video_id=video_id, date_like=date_like):
         print(record["a.username"], record["type(r)"], record["b.id"])
     # video liked by user 
     for record in tx.run("MATCH (a:Video),(b:User) "
                      "WHERE a.id = $video_id AND b.username = $username "
-                     "CREATE (a)-[r:LIKED_BY]->(b) "
-                     "RETURN a.id, type(r), b.username", video_id = video_id, username = username):
+                     "CREATE (a)-[r:LIKED_BY {on: $date_like}]->(b) "
+                     "RETURN a.id, type(r), b.username", video_id = video_id, username = username, date_like=date_like):
     	print(record["a.id"], record["type(r)"], record["b.username"])
 
 # method used to send a message 
@@ -259,11 +275,11 @@ with driver.session() as session_f:
 	# commenting and liking
 	session_f.write_transaction(write_video_comment, '5', 'narcisa.c', '4')
 	session_f.write_transaction(write_photo_comment, '6', 'annarocklady', '1')
-	session_f.write_transaction(like_photo, 'narcisa.c', '3')	
-	session_f.write_transaction(like_video, 'annarocklady', '4')
-	session_f.write_transaction(like_video, 'narcisa.c', '4')
-	session_f.write_transaction(like_photo, 'annarocklady', '1')
-	session_f.write_transaction(like_video, 'annarocklady', '2')
+	session_f.write_transaction(like_photo, 'narcisa.c', '3', '04/07/2018')	
+	session_f.write_transaction(like_video, 'annarocklady', '4', '03/23/2018')
+	session_f.write_transaction(like_video, 'narcisa.c', '4', '03/24/2018')
+	session_f.write_transaction(like_photo, 'annarocklady', '1', '04/07/2018')
+	session_f.write_transaction(like_video, 'annarocklady', '2', '05/05/2018')
 	# sending messages
 	session_f.write_transaction(send_message, '12', 'annarocklady', 'narcisa.c')
 	# create collection and add a photo a video
@@ -291,7 +307,7 @@ with driver.session() as action_session_a:
 		'Action 1: narcisa.c likes a photo:\n'+
 		'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
 
-	action_session_a.write_transaction(like_photo, 'narcisa.c', '2')
+	action_session_a.write_transaction(like_photo, 'narcisa.c', '2', '05/06/2018')
 
 # Action 2: <commenting on a video>
 
